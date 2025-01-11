@@ -17,6 +17,7 @@
       font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
       background-color: #ffd05b; /* ベビースターっぽいイメージカラー */
       text-align: center;
+      transition: background-color 0.5s; /* 背景色の切り替えを少しなめらかに */
     }
 
     header {
@@ -47,8 +48,7 @@
 
     #randomFlavorContainer,
     #answerSelection,
-    #confirmSelection,
-    #finalAnswer {
+    #confirmSelection {
       margin-top: 20px;
     }
 
@@ -72,7 +72,7 @@
       font-weight: bold;
       margin: 20px 0;
       color: #ee3333;
-      min-height: 2em;
+      min-height: 2em; 
     }
 
     /* 回答選択ボタン */
@@ -108,35 +108,7 @@
       opacity: 0.9;
     }
 
-    /* 結果表示エリア */
-    #finalAnswerMessage {
-      font-size: 1.4rem;
-      font-weight: bold;
-      margin: 20px auto;
-      color: #ee3333;
-    }
-
-    /* ドッキリ感を出すための演出 */
-    .surprise {
-      background-color: #ff6600;
-      color: #fff;
-      padding: 20px;
-      margin-top: 40px;
-      border-radius: 10px;
-      display: inline-block;
-      animation: blink 1s infinite;
-    }
-
-    @keyframes blink {
-      0%, 100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: 0.5;
-      }
-    }
-
-    /* スマホ向けに要素の余白などを少し調整 */
+    /* スマホ向けに要素の余白などを調整 */
     @media screen and (max-width: 480px) {
       .title-image {
         max-width: 90%;
@@ -187,19 +159,13 @@
       <p id="selectedAnswerMessage"></p>
       <button id="confirmButton" onclick="confirmAnswer()">これで決定！</button>
     </div>
-
-    <!-- 結果表示画面 -->
-    <div id="finalAnswer" style="display: none;">
-      <div id="correctAnswerMessage"></div>
-      <div id="finalAnswerMessage"></div>
-    </div>
   </main>
 
   <script>
     // 味候補
-    const flavors = ["チキン味","ソース味","うましお味","鶏ガラしょうゆ味"];
-    let chosenFlavor = "";   // ランダムで選ばれた味を格納
-    let userAnswer = "";     // ユーザーが選択した味を格納
+    const flavors = ["チキン味", "ソース味", "うましお味", "鶏ガラしょうゆ味"];
+    let chosenFlavor = "";   // ランダムで選ばれた味
+    let userAnswer = "";     // ユーザーが選択した味
 
     // 「味を選択」ボタン -> ランダムに味を表示
     document.getElementById("randomFlavorButton").addEventListener("click", () => {
@@ -236,29 +202,38 @@
     // 回答を選択したら確認画面を表示
     function selectAnswer(answer) {
       userAnswer = answer;
-      document.getElementById("selectedAnswerMessage").textContent = 
+      document.getElementById("selectedAnswerMessage").textContent =
         `「${userAnswer}」でよろしいですか？`;
       document.getElementById("confirmSelection").style.display = "block";
     }
 
-    // 「これで決定！」 -> 最終結果(ドッキリ)を表示
+    // 「これで決定！」 -> 最終演出(ドッキリ)
     function confirmAnswer() {
-      document.getElementById("finalAnswer").style.display = "block";
-      document.getElementById("correctAnswerMessage").innerHTML =
-        `<p>正解は…… <strong>${chosenFlavor}</strong> でした！</p>`;
-
-      // 本来なら答え発表の直後にドッキリ
-      document.getElementById("finalAnswerMessage").innerHTML = `
-        <div class="surprise">
-          6月に生まれる日下家の第二子は<br>
-          <strong>女の子完全確定!!!!</strong>
-        </div>
-      `;
-
-      // ピンクベースへスタイル変更
+      // 背景をピンクに
       document.body.style.backgroundColor = "#ffc0cb";
-      // 文字の色なども切り替えたい場合はここで変更
-      document.querySelector("h1").style.color = "#d6336c";
+
+      // ヘッダー＆メイン全体の中身を一旦消す
+      document.querySelector("header").innerHTML = "";
+      document.querySelector("main").innerHTML = "";
+
+      // 代わりに、ドッキリ表示用の要素をmain内に作成
+      const main = document.querySelector("main");
+
+      // 性別発表メッセージ（大きく表示）
+      const bigMessage = document.createElement("h2");
+      bigMessage.style.fontSize = "2rem";
+      bigMessage.style.color = "#d6336c";
+      bigMessage.style.marginTop = "100px";
+      bigMessage.textContent = "6月に生まれる日下家の第二子は 女の子完全確定!!!!";
+
+      // その下に正解表示
+      const correctMsg = document.createElement("p");
+      correctMsg.style.fontSize = "1.2rem";
+      correctMsg.style.marginTop = "2rem";
+      correctMsg.textContent = `なお、正解は「${chosenFlavor}」でした！`;
+
+      main.appendChild(bigMessage);
+      main.appendChild(correctMsg);
 
       // 紙吹雪発射
       launchConfetti();
@@ -266,12 +241,11 @@
 
     // 紙吹雪発射用関数
     function launchConfetti() {
-      // 2秒間断続的に紙吹雪が舞うサンプル
+      // 2秒間断続的に紙吹雪を出す例
       const duration = 2 * 1000;
       const end = Date.now() + duration;
 
       (function frame() {
-        // ランダムにちょっとずつ紙吹雪を出す
         confetti({
           particleCount: 5,
           angle: 60,
