@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>利きベビースター ドッキリサイト</title>
+  <!-- スマホ対応 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- 紙吹雪ライブラリ（canvas-confetti）をCDNから読み込み -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
+
   <style>
+    /* ベースのスタイル(ピンクになる前) */
     body {
       margin: 0;
       padding: 0;
@@ -38,11 +45,15 @@
       padding: 15px;
     }
 
-    #randomFlavorContainer, #answerSelection, #confirmSelection, #finalAnswer {
+    #randomFlavorContainer,
+    #answerSelection,
+    #confirmSelection,
+    #finalAnswer {
       margin-top: 20px;
     }
 
-    #randomFlavorButton {
+    /* ボタンの基本スタイル */
+    .btn {
       font-size: 1.1rem;
       padding: 10px 20px;
       background-color: #ee3333;
@@ -51,55 +62,38 @@
       border-radius: 5px;
       cursor: pointer;
     }
-
-    #randomFlavorButton:hover {
+    .btn:hover {
       opacity: 0.9;
     }
 
+    /* 高速表示される味の文字 */
     #flavorText {
       font-size: 1.6rem;
       font-weight: bold;
       margin: 20px 0;
       color: #ee3333;
-      position: relative;
-      min-height: 2em; /* secret.png で隠す位置確保 */
+      min-height: 2em;
     }
 
-    /* secret.png を上に重ねる */
-    #secretOverlay {
-      position: absolute;
-      width: 200px;
-      height: auto;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      cursor: default;
-    }
-
-    #answerSelection .answers {
-      display: inline-block;
-      text-align: left;
-      margin-top: 10px;
-    }
-
+    /* 回答選択ボタン */
     .answer-btn {
       display: block;
-      margin: 5px 0;
+      margin: 10px auto;
       background-color: #fff;
       color: #333;
       padding: 8px 12px;
       border-radius: 4px;
-      text-decoration: none;
       border: 2px solid #ccc;
       width: 200px;
       font-size: 1rem;
       cursor: pointer;
+      text-decoration: none;
     }
-
     .answer-btn:hover {
       background-color: #eee;
     }
 
+    /* 回答確認ボタン */
     #confirmButton {
       font-size: 1.1rem;
       padding: 8px 20px;
@@ -110,15 +104,11 @@
       border-radius: 5px;
       cursor: pointer;
     }
-
     #confirmButton:hover {
       opacity: 0.9;
     }
 
-    #confirmSelection, #finalAnswer {
-      font-size: 1.2rem;
-    }
-
+    /* 結果表示エリア */
     #finalAnswerMessage {
       font-size: 1.4rem;
       font-weight: bold;
@@ -145,6 +135,24 @@
         opacity: 0.5;
       }
     }
+
+    /* スマホ向けに要素の余白などを少し調整 */
+    @media screen and (max-width: 480px) {
+      .title-image {
+        max-width: 90%;
+      }
+      .mascot-image {
+        max-width: 30%;
+      }
+      .btn, .answer-btn {
+        font-size: 1rem;
+        width: 70%;
+        max-width: 250px;
+      }
+      #flavorText {
+        font-size: 1.2rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -159,19 +167,19 @@
   <main>
     <!-- 味をランダムに表示するエリア -->
     <div id="randomFlavorContainer">
-      <button id="randomFlavorButton">味を選択</button>
+      <button id="randomFlavorButton" class="btn">味を選択</button>
       <div id="flavorText"></div>
+      <!-- 「隠す」ボタン(初期は非表示) -->
+      <button id="hideFlavorButton" class="btn" style="display: none;">隠す</button>
     </div>
 
     <!-- 回答選択エリア -->
     <div id="answerSelection" style="display: none;">
       <p>どの味だと思う？</p>
-      <div class="answers">
-        <button class="answer-btn" onclick="selectAnswer('チキン味')">チキン味</button>
-        <button class="answer-btn" onclick="selectAnswer('ソース味')">ソース味</button>
-        <button class="answer-btn" onclick="selectAnswer('うましお味')">うましお味</button>
-        <button class="answer-btn" onclick="selectAnswer('鶏ガラしょうゆ味')">鶏ガラしょうゆ味</button>
-      </div>
+      <button class="answer-btn" onclick="selectAnswer('チキン味')">チキン味</button>
+      <button class="answer-btn" onclick="selectAnswer('ソース味')">ソース味</button>
+      <button class="answer-btn" onclick="selectAnswer('うましお味')">うましお味</button>
+      <button class="answer-btn" onclick="selectAnswer('鶏ガラしょうゆ味')">鶏ガラしょうゆ味</button>
     </div>
 
     <!-- 確認画面 -->
@@ -188,42 +196,44 @@
   </main>
 
   <script>
+    // 味候補
     const flavors = ["チキン味","ソース味","うましお味","鶏ガラしょうゆ味"];
     let chosenFlavor = "";   // ランダムで選ばれた味を格納
     let userAnswer = "";     // ユーザーが選択した味を格納
 
-    // 味をランダムに選択して表示
+    // 「味を選択」ボタン -> ランダムに味を表示
     document.getElementById("randomFlavorButton").addEventListener("click", () => {
       chosenFlavor = flavors[Math.floor(Math.random() * flavors.length)];
-
-      // 味を一旦高速表示する（ここではアニメーション風に2,3回変化させる）
       const flavorTextDiv = document.getElementById("flavorText");
       flavorTextDiv.textContent = ""; // 一旦クリア
 
       let count = 0;
-      const maxCount = 8; // 高速表示を数回繰り返す
+      const maxCount = 8; // 高速表示回数
       const interval = setInterval(() => {
         const randomFlavor = flavors[Math.floor(Math.random() * flavors.length)];
         flavorTextDiv.textContent = randomFlavor;
         count++;
         if (count > maxCount) {
           clearInterval(interval);
-          // 最終的に選ばれた味に確定して表示
+          // 最終的に選ばれた味に確定
           flavorTextDiv.textContent = chosenFlavor;
 
-          // secret.png を被せる
-          const secretOverlay = document.createElement("img");
-          secretOverlay.setAttribute("src", "secret.png");
-          secretOverlay.setAttribute("id", "secretOverlay");
-          flavorTextDiv.appendChild(secretOverlay);
+          // 「隠す」ボタンを表示
+          document.getElementById("hideFlavorButton").style.display = "inline-block";
 
-          // 回答選択エリア表示
+          // 回答選択エリアを表示
           document.getElementById("answerSelection").style.display = "block";
         }
       }, 100);
     });
 
-    // ユーザーが選択した味を変数に入れて、次の確認画面へ
+    // 「隠す」ボタン -> 味を非表示
+    document.getElementById("hideFlavorButton").addEventListener("click", () => {
+      document.getElementById("flavorText").style.visibility = "hidden";
+      document.getElementById("hideFlavorButton").style.display = "none";
+    });
+
+    // 回答を選択したら確認画面を表示
     function selectAnswer(answer) {
       userAnswer = answer;
       document.getElementById("selectedAnswerMessage").textContent = 
@@ -231,19 +241,54 @@
       document.getElementById("confirmSelection").style.display = "block";
     }
 
-    // 最終的な答え合わせ(ドッキリ演出)
+    // 「これで決定！」 -> 最終結果(ドッキリ)を表示
     function confirmAnswer() {
       document.getElementById("finalAnswer").style.display = "block";
-      document.getElementById("correctAnswerMessage").innerHTML = 
+      document.getElementById("correctAnswerMessage").innerHTML =
         `<p>正解は…… <strong>${chosenFlavor}</strong> でした！</p>`;
 
-      // 本来なら正解を発表するところで「ドッキリ!!」表示
+      // 本来なら答え発表の直後にドッキリ
       document.getElementById("finalAnswerMessage").innerHTML = `
         <div class="surprise">
           6月に生まれる日下家の第二子は<br>
           <strong>女の子完全確定!!!!</strong>
         </div>
       `;
+
+      // ピンクベースへスタイル変更
+      document.body.style.backgroundColor = "#ffc0cb";
+      // 文字の色なども切り替えたい場合はここで変更
+      document.querySelector("h1").style.color = "#d6336c";
+
+      // 紙吹雪発射
+      launchConfetti();
+    }
+
+    // 紙吹雪発射用関数
+    function launchConfetti() {
+      // 2秒間断続的に紙吹雪が舞うサンプル
+      const duration = 2 * 1000;
+      const end = Date.now() + duration;
+
+      (function frame() {
+        // ランダムにちょっとずつ紙吹雪を出す
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 }
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 }
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      })();
     }
   </script>
 </body>
