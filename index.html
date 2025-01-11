@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>利きベビースター ドッキリサイト</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background-color: #ffd05b; /* ベビースターっぽいイメージカラー */
+      text-align: center;
+    }
+
+    header {
+      background-color: #fff;
+      padding: 10px 0;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      color: #555;
+      margin: 5px;
+    }
+
+    .title-image {
+      max-width: 80%;
+      height: auto;
+    }
+
+    .mascot-image {
+      max-width: 20%;
+      height: auto;
+      margin: 5px 0;
+    }
+
+    main {
+      padding: 15px;
+    }
+
+    #randomFlavorContainer, #answerSelection, #confirmSelection, #finalAnswer {
+      margin-top: 20px;
+    }
+
+    #randomFlavorButton {
+      font-size: 1.1rem;
+      padding: 10px 20px;
+      background-color: #ee3333;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #randomFlavorButton:hover {
+      opacity: 0.9;
+    }
+
+    #flavorText {
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin: 20px 0;
+      color: #ee3333;
+      position: relative;
+      min-height: 2em; /* secret.png で隠す位置確保 */
+    }
+
+    /* secret.png を上に重ねる */
+    #secretOverlay {
+      position: absolute;
+      width: 200px;
+      height: auto;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      cursor: default;
+    }
+
+    #answerSelection .answers {
+      display: inline-block;
+      text-align: left;
+      margin-top: 10px;
+    }
+
+    .answer-btn {
+      display: block;
+      margin: 5px 0;
+      background-color: #fff;
+      color: #333;
+      padding: 8px 12px;
+      border-radius: 4px;
+      text-decoration: none;
+      border: 2px solid #ccc;
+      width: 200px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .answer-btn:hover {
+      background-color: #eee;
+    }
+
+    #confirmButton {
+      font-size: 1.1rem;
+      padding: 8px 20px;
+      margin-top: 20px;
+      background-color: #ee3333;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #confirmButton:hover {
+      opacity: 0.9;
+    }
+
+    #confirmSelection, #finalAnswer {
+      font-size: 1.2rem;
+    }
+
+    #finalAnswerMessage {
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin: 20px auto;
+      color: #ee3333;
+    }
+
+    /* ドッキリ感を出すための演出 */
+    .surprise {
+      background-color: #ff6600;
+      color: #fff;
+      padding: 20px;
+      margin-top: 40px;
+      border-radius: 10px;
+      display: inline-block;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>利きベビースター ドッキリサイト</h1>
+    <!-- タイトル画像 -->
+    <img src="tit_mv.png" alt="ベビースタータイトル" class="title-image"><br>
+    <!-- キャラクター -->
+    <img src="since_hoshio.png" alt="ベビースターマスコットキャラクター" class="mascot-image">
+  </header>
+
+  <main>
+    <!-- 味をランダムに表示するエリア -->
+    <div id="randomFlavorContainer">
+      <button id="randomFlavorButton">味を選択</button>
+      <div id="flavorText"></div>
+    </div>
+
+    <!-- 回答選択エリア -->
+    <div id="answerSelection" style="display: none;">
+      <p>どの味だと思う？</p>
+      <div class="answers">
+        <button class="answer-btn" onclick="selectAnswer('チキン味')">チキン味</button>
+        <button class="answer-btn" onclick="selectAnswer('ソース味')">ソース味</button>
+        <button class="answer-btn" onclick="selectAnswer('うましお味')">うましお味</button>
+        <button class="answer-btn" onclick="selectAnswer('鶏ガラしょうゆ味')">鶏ガラしょうゆ味</button>
+      </div>
+    </div>
+
+    <!-- 確認画面 -->
+    <div id="confirmSelection" style="display: none;">
+      <p id="selectedAnswerMessage"></p>
+      <button id="confirmButton" onclick="confirmAnswer()">これで決定！</button>
+    </div>
+
+    <!-- 結果表示画面 -->
+    <div id="finalAnswer" style="display: none;">
+      <div id="correctAnswerMessage"></div>
+      <div id="finalAnswerMessage"></div>
+    </div>
+  </main>
+
+  <script>
+    const flavors = ["チキン味","ソース味","うましお味","鶏ガラしょうゆ味"];
+    let chosenFlavor = "";   // ランダムで選ばれた味を格納
+    let userAnswer = "";     // ユーザーが選択した味を格納
+
+    // 味をランダムに選択して表示
+    document.getElementById("randomFlavorButton").addEventListener("click", () => {
+      chosenFlavor = flavors[Math.floor(Math.random() * flavors.length)];
+
+      // 味を一旦高速表示する（ここではアニメーション風に2,3回変化させる）
+      const flavorTextDiv = document.getElementById("flavorText");
+      flavorTextDiv.textContent = ""; // 一旦クリア
+
+      let count = 0;
+      const maxCount = 8; // 高速表示を数回繰り返す
+      const interval = setInterval(() => {
+        const randomFlavor = flavors[Math.floor(Math.random() * flavors.length)];
+        flavorTextDiv.textContent = randomFlavor;
+        count++;
+        if (count > maxCount) {
+          clearInterval(interval);
+          // 最終的に選ばれた味に確定して表示
+          flavorTextDiv.textContent = chosenFlavor;
+
+          // secret.png を被せる
+          const secretOverlay = document.createElement("img");
+          secretOverlay.setAttribute("src", "secret.png");
+          secretOverlay.setAttribute("id", "secretOverlay");
+          flavorTextDiv.appendChild(secretOverlay);
+
+          // 回答選択エリア表示
+          document.getElementById("answerSelection").style.display = "block";
+        }
+      }, 100);
+    });
+
+    // ユーザーが選択した味を変数に入れて、次の確認画面へ
+    function selectAnswer(answer) {
+      userAnswer = answer;
+      document.getElementById("selectedAnswerMessage").textContent = 
+        `「${userAnswer}」でよろしいですか？`;
+      document.getElementById("confirmSelection").style.display = "block";
+    }
+
+    // 最終的な答え合わせ(ドッキリ演出)
+    function confirmAnswer() {
+      document.getElementById("finalAnswer").style.display = "block";
+      document.getElementById("correctAnswerMessage").innerHTML = 
+        `<p>正解は…… <strong>${chosenFlavor}</strong> でした！</p>`;
+
+      // 本来なら正解を発表するところで「ドッキリ!!」表示
+      document.getElementById("finalAnswerMessage").innerHTML = `
+        <div class="surprise">
+          6月に生まれる日下家の第二子は<br>
+          <strong>女の子完全確定!!!!</strong>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
