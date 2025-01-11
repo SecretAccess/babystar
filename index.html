@@ -117,6 +117,27 @@
       color: #ee3333;
     }
 
+    /* モード選択エリア */
+    #modeSelection {
+      margin-top: 30px;
+    }
+    .mode-btn {
+      font-size: 1rem;
+      padding: 8px 16px;
+      margin: 5px;
+      background-color: #888; /* Default background */
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .mode-btn.active {
+      background-color: #ee3333; /* Active background */
+    }
+    .mode-btn:hover {
+      opacity: 0.9;
+    }
+
     /* スマホ向けに要素の余白などを調整 */
     @media screen and (max-width: 480px) {
       .title-image {
@@ -125,7 +146,7 @@
       .mascot-image {
         max-width: 30%;
       }
-      .btn, .answer-btn {
+      .btn, .answer-btn, .mode-btn {
         font-size: 1rem;
         width: 70%;
         max-width: 250px;
@@ -149,8 +170,15 @@
   </header>
 
   <main>
+    <!-- モード選択エリア -->
+    <div id="modeSelection">
+      <p>モードを選択してください：</p>
+      <button id="modeNButton" class="mode-btn active">ノーマルN</button>
+      <button id="modeFButton" class="mode-btn">大袋タイプF</button>
+    </div>
+
     <!-- 味をランダムに表示するエリア -->
-    <div id="randomFlavorContainer">
+    <div id="randomFlavorContainer" style="display: none;">
       <button id="randomFlavorButton" class="btn">味を選択</button>
       <div id="flavorText"></div>
       <!-- 「隠す」ボタン(初期は非表示) -->
@@ -184,14 +212,39 @@
 
   <script>
     // ==============================
-    // 1) アクセス時にモード選択
+    // 1) モード選択 via buttons
     // ==============================
-    let mode = prompt("4連ノーマルN、大袋タイプFのどちらにしますか？ (F/N)", "N");
-    if (!mode) mode = "N"; // 空入力などの場合はN
 
-    mode = mode.toUpperCase(); // 大文字に統一
-    if (mode !== "F" && mode !== "N") {
-      mode = "N"; // FでもNでもなければNにしておく
+    let mode = "N"; // Default mode is N
+
+    const modeSelectionDiv = document.getElementById("modeSelection");
+    const modeNButton = document.getElementById("modeNButton");
+    const modeFButton = document.getElementById("modeFButton");
+
+    modeNButton.addEventListener("click", () => {
+      mode = "N";
+      modeNButton.classList.add("active");
+      modeFButton.classList.remove("active");
+      startProcess();
+    });
+
+    modeFButton.addEventListener("click", () => {
+      mode = "F";
+      modeFButton.classList.add("active");
+      modeNButton.classList.remove("active");
+      startProcess();
+    });
+
+    // Automatically start with default mode N
+    window.onload = function() {
+      startProcess();
+    };
+
+    function startProcess() {
+      // Hide mode selection after selecting
+      modeSelectionDiv.style.display = "none";
+      // Show randomFlavorContainer
+      document.getElementById("randomFlavorContainer").style.display = "block";
     }
 
     // ==============================
@@ -220,20 +273,20 @@
 
           // 「隠す」ボタンを表示
           document.getElementById("hideFlavorButton").style.display = "inline-block";
-
-          // 回答選択エリアを表示
-          document.getElementById("answerSelection").style.display = "block";
-          
-          // ▼ 自動スクロール（回答選択までスムーズに）
-          document.getElementById("answerSelection").scrollIntoView({ behavior: 'smooth' });
         }
       }, 100);
     });
 
-    // 「隠す」ボタン -> 味を非表示
+    // 「隠す」ボタン -> 味を非表示し、「どの味だと思う？」と回答選択を表示
     document.getElementById("hideFlavorButton").addEventListener("click", () => {
       document.getElementById("flavorText").style.visibility = "hidden";
       document.getElementById("hideFlavorButton").style.display = "none";
+
+      // Show "どの味だと思う？" and answer selection
+      document.getElementById("answerSelection").style.display = "block";
+
+      // ▼ 自動スクロール（回答選択までスムーズに）
+      document.getElementById("answerSelection").scrollIntoView({ behavior: 'smooth' });
     });
 
     // 回答を選択したら確認画面を表示
@@ -258,7 +311,8 @@
         document.getElementById("finalAnswer").style.display = "block";
         document.getElementById("correctAnswerMessage").innerHTML =
           `<p>正解は…… <strong>${chosenFlavor}</strong> でした！</p>`;
-        document.getElementById("finalAnswerMessage").textContent = "ありがとうございました！";
+        // Remove "ありがとうございました！"
+        // document.getElementById("finalAnswerMessage").textContent = "ありがとうございました！";
 
         // 正誤判定してメッセージを出し分け
         const judgement = (userAnswer === chosenFlavor) ? "おみごと！" : "ざんねんっ！";
@@ -353,9 +407,106 @@
     // 5) もう一度ボタン(N)用
     // ==============================
     function retryN() {
-      // ページをリロード → 再度最初から
-      location.reload();
+      // Reset the process to Type N without showing mode selection
+      mode = "N";
+
+      // Reset the background color
+      document.body.style.backgroundColor = "#ffd05b";
+
+      // Reset the header
+      document.querySelector("header").innerHTML = `
+        <h1>利きベビースターサイト</h1>
+        <!-- タイトル画像 -->
+        <img src="tit_mv.png" alt="ベビースタータイトル" class="title-image"><br>
+        <!-- キャラクター -->
+        <img src="since_hoshio.png" alt="ベビースターマスコットキャラクター" class="mascot-image">
+      `;
+
+      // Reset the main content
+      document.querySelector("main").innerHTML = `
+        <!-- 味をランダムに表示するエリア -->
+        <div id="randomFlavorContainer">
+          <button id="randomFlavorButton" class="btn">味を選択</button>
+          <div id="flavorText"></div>
+          <!-- 「隠す」ボタン(初期は非表示) -->
+          <button id="hideFlavorButton" class="btn" style="display: none;">隠す</button>
+        </div>
+
+        <!-- 回答選択エリア -->
+        <div id="answerSelection" style="display: none;">
+          <p>どの味だと思う？</p>
+          <button class="answer-btn" onclick="selectAnswer('チキン味')">チキン味</button>
+          <button class="answer-btn" onclick="selectAnswer('ソース味')">ソース味</button>
+          <button class="answer-btn" onclick="selectAnswer('うましお味')">うましお味</button>
+          <button class="answer-btn" onclick="selectAnswer('鶏ガラしょうゆ味')">鶏ガラしょうゆ味</button>
+        </div>
+
+        <!-- 確認画面 -->
+        <div id="confirmSelection" style="display: none;">
+          <p id="selectedAnswerMessage"></p>
+          <button id="confirmButton" onclick="confirmAnswer()">これで決定！</button>
+        </div>
+
+        <!-- 通常（N）用の結果表示画面 -->
+        <div id="finalAnswer" style="display: none;">
+          <div id="correctAnswerMessage"></div>
+          <div id="finalAnswerMessage"></div>
+          <!-- 正誤メッセージと「もう一度」ボタンを追加 -->
+          <p id="judgementMessage"></p>
+          <button id="retryButton" class="btn" style="display: none;" onclick="retryN()">もう一度</button>
+        </div>
+      `;
+
+      // Re-attach event listeners
+      attachEventListeners();
+
+      // Show the flavor selection area
+      document.getElementById("randomFlavorContainer").style.display = "block";
     }
+
+    // Function to attach event listeners after retryN()
+    function attachEventListeners() {
+      // 「味を選択」ボタン -> ランダムに味を表示
+      document.getElementById("randomFlavorButton").addEventListener("click", () => {
+        chosenFlavor = flavors[Math.floor(Math.random() * flavors.length)];
+        const flavorTextDiv = document.getElementById("flavorText");
+        flavorTextDiv.textContent = ""; // 一旦クリア
+
+        let count = 0;
+        const maxCount = 8; // 高速表示回数
+        const interval = setInterval(() => {
+          const randomFlavor = flavors[Math.floor(Math.random() * flavors.length)];
+          flavorTextDiv.textContent = randomFlavor;
+          count++;
+          if (count > maxCount) {
+            clearInterval(interval);
+            // 最終的に選ばれた味に確定
+            flavorTextDiv.textContent = chosenFlavor;
+
+            // 「隠す」ボタンを表示
+            document.getElementById("hideFlavorButton").style.display = "inline-block";
+          }
+        }, 100);
+      });
+
+      // 「隠す」ボタン -> 味を非表示し、「どの味だと思う？」と回答選択を表示
+      document.getElementById("hideFlavorButton").addEventListener("click", () => {
+        document.getElementById("flavorText").style.visibility = "hidden";
+        document.getElementById("hideFlavorButton").style.display = "none";
+
+        // Show "どの味だと思う？" and answer selection
+        document.getElementById("answerSelection").style.display = "block";
+
+        // ▼ 自動スクロール（回答選択までスムーズに）
+        document.getElementById("answerSelection").scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+
+    // ==============================
+    // 4) もう一度ボタン(N)用
+    // ==============================
+    // Already implemented in retryN()
+
   </script>
 </body>
 </html>
