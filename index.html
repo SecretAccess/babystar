@@ -307,13 +307,12 @@
         bigMessage.style.lineHeight = "1.5"; 
         bigMessage.innerHTML = "6月に生まれる<br>日下家の第二子は<br>女の子完全確定!!!!";
 
-        // 2) 画像を横幅いっぱいに表示（不要の場合は削除）
-        // ※ユーザーの要望により、ロゴ画像やキャラクター画像を削除
-        // const image = document.createElement("img");
-        // image.src = "S__66215965.jpg"; 
-        // image.style.width = "100%";
-        // image.style.height = "auto";
-        // image.style.marginTop = "20px";
+        // 2) 画像を横幅いっぱいに表示
+        const image = document.createElement("img");
+        image.src = "S__66215965.jpg"; 
+        image.style.width = "100%";
+        image.style.height = "auto";
+        image.style.marginTop = "20px";
 
         // 3) その下に正解表示（グレー・小さめ・1行）
         const correctMsg = document.createElement("p");
@@ -326,7 +325,7 @@
 
         // 要素を追加
         main.appendChild(bigMessage);
-        // main.appendChild(image); // 画像を削除
+        main.appendChild(image); // 画像を追加
         main.appendChild(correctMsg);
 
         // 一番上へスクロール（大きな文字をすぐ見せたい場合）
