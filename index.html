@@ -23,6 +23,7 @@
     header {
       background-color: #fff;
       padding: 10px 0;
+      position: relative;
     }
 
     h1 {
@@ -40,6 +41,29 @@
       max-width: 20%;
       height: auto;
       margin: 5px 0;
+    }
+
+    /* モード選択エリア */
+    #modeSelection {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+    .mode-btn {
+      font-size: 0.9rem;
+      padding: 6px 12px;
+      margin: 0 5px;
+      background-color: #888; /* Default background */
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .mode-btn.active {
+      background-color: #ee3333; /* Active background */
+    }
+    .mode-btn:hover {
+      opacity: 0.9;
     }
 
     main {
@@ -117,27 +141,6 @@
       color: #ee3333;
     }
 
-    /* モード選択エリア */
-    #modeSelection {
-      margin-top: 30px;
-    }
-    .mode-btn {
-      font-size: 1rem;
-      padding: 8px 16px;
-      margin: 5px;
-      background-color: #888; /* Default background */
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .mode-btn.active {
-      background-color: #ee3333; /* Active background */
-    }
-    .mode-btn:hover {
-      opacity: 0.9;
-    }
-
     /* スマホ向けに要素の余白などを調整 */
     @media screen and (max-width: 480px) {
       .title-image {
@@ -167,16 +170,15 @@
     <img src="tit_mv.png" alt="ベビースタータイトル" class="title-image"><br>
     <!-- キャラクター -->
     <img src="since_hoshio.png" alt="ベビースターマスコットキャラクター" class="mascot-image">
-  </header>
-
-  <main>
+    
     <!-- モード選択エリア -->
     <div id="modeSelection">
-      <p>モードを選択してください：</p>
       <button id="modeNButton" class="mode-btn active">ノーマルN</button>
       <button id="modeFButton" class="mode-btn">大袋タイプF</button>
     </div>
+  </header>
 
+  <main>
     <!-- 味をランダムに表示するエリア -->
     <div id="randomFlavorContainer" style="display: none;">
       <button id="randomFlavorButton" class="btn">味を選択</button>
@@ -203,7 +205,6 @@
     <!-- 通常（N）用の結果表示画面 -->
     <div id="finalAnswer" style="display: none;">
       <div id="correctAnswerMessage"></div>
-      <div id="finalAnswerMessage"></div>
       <!-- 正誤メッセージと「もう一度」ボタンを追加 -->
       <p id="judgementMessage"></p>
       <button id="retryButton" class="btn" style="display: none;" onclick="retryN()">もう一度</button>
@@ -222,17 +223,21 @@
     const modeFButton = document.getElementById("modeFButton");
 
     modeNButton.addEventListener("click", () => {
-      mode = "N";
-      modeNButton.classList.add("active");
-      modeFButton.classList.remove("active");
-      startProcess();
+      if (mode !== "N") {
+        mode = "N";
+        modeNButton.classList.add("active");
+        modeFButton.classList.remove("active");
+        resetProcess();
+      }
     });
 
     modeFButton.addEventListener("click", () => {
-      mode = "F";
-      modeFButton.classList.add("active");
-      modeNButton.classList.remove("active");
-      startProcess();
+      if (mode !== "F") {
+        mode = "F";
+        modeFButton.classList.add("active");
+        modeNButton.classList.remove("active");
+        resetProcess();
+      }
     });
 
     // Automatically start with default mode N
@@ -240,9 +245,28 @@
       startProcess();
     };
 
+    function resetProcess() {
+      // Reset all sections
+      document.getElementById("randomFlavorContainer").style.display = "none";
+      document.getElementById("flavorText").style.visibility = "visible";
+      document.getElementById("flavorText").textContent = "";
+      document.getElementById("hideFlavorButton").style.display = "none";
+      document.getElementById("answerSelection").style.display = "none";
+      document.getElementById("confirmSelection").style.display = "none";
+      document.getElementById("finalAnswer").style.display = "none";
+      document.getElementById("judgementMessage").textContent = "";
+      document.getElementById("retryButton").style.display = "none";
+
+      // Reset background color if it was changed in Type F
+      if (mode !== "F") {
+        document.body.style.backgroundColor = "#ffd05b"; /* ベビースターっぽいイメージカラー */
+      }
+
+      // Show flavor selection
+      startProcess();
+    }
+
     function startProcess() {
-      // Hide mode selection after selecting
-      modeSelectionDiv.style.display = "none";
       // Show randomFlavorContainer
       document.getElementById("randomFlavorContainer").style.display = "block";
     }
@@ -311,8 +335,6 @@
         document.getElementById("finalAnswer").style.display = "block";
         document.getElementById("correctAnswerMessage").innerHTML =
           `<p>正解は…… <strong>${chosenFlavor}</strong> でした！</p>`;
-        // Remove "ありがとうございました！"
-        // document.getElementById("finalAnswerMessage").textContent = "ありがとうございました！";
 
         // 正誤判定してメッセージを出し分け
         const judgement = (userAnswer === chosenFlavor) ? "おみごと！" : "ざんねんっ！";
@@ -332,7 +354,19 @@
         document.body.style.backgroundColor = "#ffc0cb";
 
         // ヘッダー＆メインを一旦消去
-        document.querySelector("header").innerHTML = "";
+        document.querySelector("header").innerHTML = `
+          <h1>利きベビースターサイト</h1>
+          <!-- タイトル画像 -->
+          <img src="tit_mv.png" alt="ベビースタータイトル" class="title-image"><br>
+          <!-- キャラクター -->
+          <img src="since_hoshio.png" alt="ベビースターマスコットキャラクター" class="mascot-image">
+          <!-- モード選択エリア -->
+          <div id="modeSelection">
+            <button id="modeNButton" class="mode-btn">ノーマルN</button>
+            <button id="modeFButton" class="mode-btn active">大袋タイプF</button>
+          </div>
+        `;
+
         document.querySelector("main").innerHTML = "";
 
         // 新たに、ドッキリ表示用の要素を main 内に作成
@@ -372,6 +406,9 @@
 
         // 紙吹雪発射
         launchConfetti();
+
+        // Re-attach mode selection event listeners
+        attachModeSelectionListeners();
       }
     }
 
@@ -420,6 +457,12 @@
         <img src="tit_mv.png" alt="ベビースタータイトル" class="title-image"><br>
         <!-- キャラクター -->
         <img src="since_hoshio.png" alt="ベビースターマスコットキャラクター" class="mascot-image">
+        
+        <!-- モード選択エリア -->
+        <div id="modeSelection">
+          <button id="modeNButton" class="mode-btn active">ノーマルN</button>
+          <button id="modeFButton" class="mode-btn">大袋タイプF</button>
+        </div>
       `;
 
       // Reset the main content
@@ -450,7 +493,6 @@
         <!-- 通常（N）用の結果表示画面 -->
         <div id="finalAnswer" style="display: none;">
           <div id="correctAnswerMessage"></div>
-          <div id="finalAnswerMessage"></div>
           <!-- 正誤メッセージと「もう一度」ボタンを追加 -->
           <p id="judgementMessage"></p>
           <button id="retryButton" class="btn" style="display: none;" onclick="retryN()">もう一度</button>
@@ -458,55 +500,84 @@
       `;
 
       // Re-attach event listeners
-      attachEventListeners();
+      attachModeSelectionListeners();
+      attachProcessEventListeners();
 
       // Show the flavor selection area
       document.getElementById("randomFlavorContainer").style.display = "block";
+
+      // ▼ 自動スクロール（味選択へ）
+      document.getElementById("randomFlavorContainer").scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Function to attach event listeners after retryN()
-    function attachEventListeners() {
-      // 「味を選択」ボタン -> ランダムに味を表示
-      document.getElementById("randomFlavorButton").addEventListener("click", () => {
-        chosenFlavor = flavors[Math.floor(Math.random() * flavors.length)];
-        const flavorTextDiv = document.getElementById("flavorText");
-        flavorTextDiv.textContent = ""; // 一旦クリア
+    // ==============================
+    // 6) イベントリスナー再設定関数
+    // ==============================
+    function attachModeSelectionListeners() {
+      const newModeNButton = document.getElementById("modeNButton");
+      const newModeFButton = document.getElementById("modeFButton");
 
-        let count = 0;
-        const maxCount = 8; // 高速表示回数
-        const interval = setInterval(() => {
-          const randomFlavor = flavors[Math.floor(Math.random() * flavors.length)];
-          flavorTextDiv.textContent = randomFlavor;
-          count++;
-          if (count > maxCount) {
-            clearInterval(interval);
-            // 最終的に選ばれた味に確定
-            flavorTextDiv.textContent = chosenFlavor;
-
-            // 「隠す」ボタンを表示
-            document.getElementById("hideFlavorButton").style.display = "inline-block";
-          }
-        }, 100);
+      newModeNButton.addEventListener("click", () => {
+        if (mode !== "N") {
+          mode = "N";
+          newModeNButton.classList.add("active");
+          newModeFButton.classList.remove("active");
+          resetProcess();
+        }
       });
+
+      newModeFButton.addEventListener("click", () => {
+        if (mode !== "F") {
+          mode = "F";
+          newModeFButton.classList.add("active");
+          newModeNButton.classList.remove("active");
+          resetProcess();
+        }
+      });
+    }
+
+    function attachProcessEventListeners() {
+      // 「味を選択」ボタン -> ランダムに味を表示
+      const newRandomFlavorButton = document.getElementById("randomFlavorButton");
+      if (newRandomFlavorButton) {
+        newRandomFlavorButton.addEventListener("click", () => {
+          chosenFlavor = flavors[Math.floor(Math.random() * flavors.length)];
+          const flavorTextDiv = document.getElementById("flavorText");
+          flavorTextDiv.textContent = ""; // 一旦クリア
+
+          let count = 0;
+          const maxCount = 8; // 高速表示回数
+          const interval = setInterval(() => {
+            const randomFlavor = flavors[Math.floor(Math.random() * flavors.length)];
+            flavorTextDiv.textContent = randomFlavor;
+            count++;
+            if (count > maxCount) {
+              clearInterval(interval);
+              // 最終的に選ばれた味に確定
+              flavorTextDiv.textContent = chosenFlavor;
+
+              // 「隠す」ボタンを表示
+              document.getElementById("hideFlavorButton").style.display = "inline-block";
+            }
+          }, 100);
+        });
+      }
 
       // 「隠す」ボタン -> 味を非表示し、「どの味だと思う？」と回答選択を表示
-      document.getElementById("hideFlavorButton").addEventListener("click", () => {
-        document.getElementById("flavorText").style.visibility = "hidden";
-        document.getElementById("hideFlavorButton").style.display = "none";
+      const newHideFlavorButton = document.getElementById("hideFlavorButton");
+      if (newHideFlavorButton) {
+        newHideFlavorButton.addEventListener("click", () => {
+          document.getElementById("flavorText").style.visibility = "hidden";
+          newHideFlavorButton.style.display = "none";
 
-        // Show "どの味だと思う？" and answer selection
-        document.getElementById("answerSelection").style.display = "block";
+          // Show "どの味だと思う？" and answer selection
+          document.getElementById("answerSelection").style.display = "block";
 
-        // ▼ 自動スクロール（回答選択までスムーズに）
-        document.getElementById("answerSelection").scrollIntoView({ behavior: 'smooth' });
-      });
+          // ▼ 自動スクロール（回答選択までスムーズに）
+          document.getElementById("answerSelection").scrollIntoView({ behavior: 'smooth' });
+        });
+      }
     }
-
-    // ==============================
-    // 4) もう一度ボタン(N)用
-    // ==============================
-    // Already implemented in retryN()
-
   </script>
 </body>
 </html>
