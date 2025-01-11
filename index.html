@@ -176,6 +176,9 @@
     <div id="finalAnswer" style="display: none;">
       <div id="correctAnswerMessage"></div>
       <div id="finalAnswerMessage"></div>
+      <!-- 正誤メッセージと「もう一度」ボタンを追加 -->
+      <p id="judgementMessage"></p>
+      <button id="retryButton" class="btn" style="display: none;" onclick="retryN()">もう一度</button>
     </div>
   </main>
 
@@ -257,6 +260,13 @@
           `<p>正解は…… <strong>${chosenFlavor}</strong> でした！</p>`;
         document.getElementById("finalAnswerMessage").textContent = "ありがとうございました！";
 
+        // 正誤判定してメッセージを出し分け
+        const judgement = (userAnswer === chosenFlavor) ? "おみごと！" : "ざんねんっ！";
+        document.getElementById("judgementMessage").textContent = judgement;
+
+        // もう一度ボタンを表示
+        document.getElementById("retryButton").style.display = "inline-block";
+
         // ▼ 自動スクロール（結果画面へ）
         document.getElementById("finalAnswer").scrollIntoView({ behavior: 'smooth' });
 
@@ -289,12 +299,13 @@
         image.style.height = "auto";
         image.style.marginTop = "20px";
 
-        // 3) その下に正解表示（ポップなフォント）
+        // 3) その下に正解表示（グレー・小さめ・1行）
         const correctMsg = document.createElement("p");
         correctMsg.style.fontFamily = "'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif";
-        correctMsg.style.fontSize = "1.6rem";
-        correctMsg.style.color = "#d6336c";
-        correctMsg.style.marginTop = "2rem";
+        correctMsg.style.fontSize = "1rem";
+        correctMsg.style.color = "#888";
+        correctMsg.style.lineHeight = "1.2";
+        correctMsg.style.marginTop = "10px";
         correctMsg.innerHTML = `なお、正解は「${chosenFlavor}」でした！`;
 
         // 要素を追加
@@ -336,6 +347,14 @@
           requestAnimationFrame(frame);
         }
       })();
+    }
+
+    // ==============================
+    // 5) もう一度ボタン(N)用
+    // ==============================
+    function retryN() {
+      // ページをリロード → 再度最初から
+      location.reload();
     }
   </script>
 </body>
