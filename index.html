@@ -220,6 +220,9 @@
 
           // 回答選択エリアを表示
           document.getElementById("answerSelection").style.display = "block";
+          
+          // ▼ 自動スクロール（回答選択までスムーズに）
+          document.getElementById("answerSelection").scrollIntoView({ behavior: 'smooth' });
         }
       }, 100);
     });
@@ -236,6 +239,9 @@
       document.getElementById("selectedAnswerMessage").textContent =
         `「${userAnswer}」でよろしいですか？`;
       document.getElementById("confirmSelection").style.display = "block";
+
+      // ▼ 自動スクロール（確認画面までスムーズに）
+      document.getElementById("confirmSelection").scrollIntoView({ behavior: 'smooth' });
     }
 
     // ==============================
@@ -246,15 +252,17 @@
         // --------------------------------
         // ノーマルモード(N) の場合
         // --------------------------------
-        // 既存の最終結果画面を表示
         document.getElementById("finalAnswer").style.display = "block";
         document.getElementById("correctAnswerMessage").innerHTML =
           `<p>正解は…… <strong>${chosenFlavor}</strong> でした！</p>`;
         document.getElementById("finalAnswerMessage").textContent = "ありがとうございました！";
 
+        // ▼ 自動スクロール（結果画面へ）
+        document.getElementById("finalAnswer").scrollIntoView({ behavior: 'smooth' });
+
       } else {
         // --------------------------------
-        // 性別発表モード(F) の場合
+        // ご当地タイプ(F) の場合
         // --------------------------------
         // 背景をピンクに
         document.body.style.backgroundColor = "#ffc0cb";
@@ -272,10 +280,9 @@
         bigMessage.style.color = "#d6336c";
         bigMessage.style.marginTop = "100px";
         bigMessage.style.lineHeight = "1.5"; 
-        // 改行入りで表示
         bigMessage.innerHTML = "6月に生まれる<br>日下家の第二子は<br>女の子完全確定!!!!";
 
-        // 2) 画像を横幅いっぱいに表示
+        // 2) 画像を横幅いっぱいに表示（差し替え注意）
         const image = document.createElement("img");
         image.src = "S__66215965.jpg"; 
         image.style.width = "100%";
@@ -294,6 +301,9 @@
         main.appendChild(bigMessage);
         main.appendChild(image);
         main.appendChild(correctMsg);
+
+        // 一番上へスクロール（大きな文字をすぐ見せたい場合）
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
         // 紙吹雪発射
         launchConfetti();
