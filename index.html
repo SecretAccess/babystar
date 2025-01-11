@@ -48,7 +48,8 @@
 
     #randomFlavorContainer,
     #answerSelection,
-    #confirmSelection {
+    #confirmSelection,
+    #finalAnswer {
       margin-top: 20px;
     }
 
@@ -108,6 +109,14 @@
       opacity: 0.9;
     }
 
+    /* 通常（N）用の最終表示 */
+    #finalAnswerMessage {
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin: 20px auto;
+      color: #ee3333;
+    }
+
     /* スマホ向けに要素の余白などを調整 */
     @media screen and (max-width: 480px) {
       .title-image {
@@ -122,6 +131,9 @@
         max-width: 250px;
       }
       #flavorText {
+        font-size: 1.2rem;
+      }
+      #finalAnswerMessage {
         font-size: 1.2rem;
       }
     }
@@ -159,10 +171,29 @@
       <p id="selectedAnswerMessage"></p>
       <button id="confirmButton" onclick="confirmAnswer()">これで決定！</button>
     </div>
+
+    <!-- 通常（N）用の結果表示画面 -->
+    <div id="finalAnswer" style="display: none;">
+      <div id="correctAnswerMessage"></div>
+      <div id="finalAnswerMessage"></div>
+    </div>
   </main>
 
   <script>
-    // 味候補
+    // ==============================
+    // 1) アクセス時にモード選択
+    // ==============================
+    let mode = prompt("性別発表用タイプF、またはノーマルNのどちらにしますか？ (F/N)", "N");
+    if (!mode) mode = "N"; // 空入力などの場合はN
+
+    mode = mode.toUpperCase(); // 大文字に統一
+    if (mode !== "F" && mode !== "N") {
+      mode = "N"; // FでもNでもなければNにしておく
+    }
+
+    // ==============================
+    // 2) 利きベビースター本体の処理
+    // ==============================
     const flavors = ["チキン味", "ソース味", "うましお味", "鶏ガラしょうゆ味"];
     let chosenFlavor = "";   // ランダムで選ばれた味
     let userAnswer = "";     // ユーザーが選択した味
@@ -207,39 +238,71 @@
       document.getElementById("confirmSelection").style.display = "block";
     }
 
-    // 「これで決定！」 -> 最終演出(ドッキリ)
+    // ==============================
+    // 3) 「これで決定！」 -> 結果表示
+    // ==============================
     function confirmAnswer() {
-      // 背景をピンクに
-      document.body.style.backgroundColor = "#ffc0cb";
+      if (mode === "N") {
+        // --------------------------------
+        // ノーマルモード(N) の場合
+        // --------------------------------
+        // 既存の最終結果画面を表示
+        document.getElementById("finalAnswer").style.display = "block";
+        document.getElementById("correctAnswerMessage").innerHTML =
+          `<p>正解は…… <strong>${chosenFlavor}</strong> でした！</p>`;
+        document.getElementById("finalAnswerMessage").textContent = "ありがとうございました！";
 
-      // ヘッダー＆メイン全体の中身を一旦消す
-      document.querySelector("header").innerHTML = "";
-      document.querySelector("main").innerHTML = "";
+      } else {
+        // --------------------------------
+        // 性別発表モード(F) の場合
+        // --------------------------------
+        // 背景をピンクに
+        document.body.style.backgroundColor = "#ffc0cb";
 
-      // 代わりに、ドッキリ表示用の要素をmain内に作成
-      const main = document.querySelector("main");
+        // ヘッダー＆メインを一旦消去
+        document.querySelector("header").innerHTML = "";
+        document.querySelector("main").innerHTML = "";
 
-      // 性別発表メッセージ（大きく表示）
-      const bigMessage = document.createElement("h2");
-      bigMessage.style.fontSize = "2rem";
-      bigMessage.style.color = "#d6336c";
-      bigMessage.style.marginTop = "100px";
-      bigMessage.textContent = "6月に生まれる日下家の第二子は 女の子完全確定!!!!";
+        // 新たに、ドッキリ表示用の要素を main 内に作成
+        const main = document.querySelector("main");
 
-      // その下に正解表示
-      const correctMsg = document.createElement("p");
-      correctMsg.style.fontSize = "1.2rem";
-      correctMsg.style.marginTop = "2rem";
-      correctMsg.textContent = `なお、正解は「${chosenFlavor}」でした！`;
+        // 1) 性別発表メッセージ（大きく3行表示）
+        const bigMessage = document.createElement("h2");
+        bigMessage.style.fontSize = "2rem";
+        bigMessage.style.color = "#d6336c";
+        bigMessage.style.marginTop = "100px";
+        bigMessage.style.lineHeight = "1.5"; 
+        // 改行入りで表示
+        bigMessage.innerHTML = "6月に生まれる<br>日下家の第二子は<br>女の子完全確定!!!!";
 
-      main.appendChild(bigMessage);
-      main.appendChild(correctMsg);
+        // 2) 画像を横幅いっぱいに表示
+        const image = document.createElement("img");
+        image.src = "S__66215965.jpg"; 
+        image.style.width = "100%";
+        image.style.height = "auto";
+        image.style.marginTop = "20px";
 
-      // 紙吹雪発射
-      launchConfetti();
+        // 3) その下に正解表示（ポップなフォント）
+        const correctMsg = document.createElement("p");
+        correctMsg.style.fontFamily = "'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif";
+        correctMsg.style.fontSize = "1.6rem";
+        correctMsg.style.color = "#d6336c";
+        correctMsg.style.marginTop = "2rem";
+        correctMsg.innerHTML = `なお、正解は「${chosenFlavor}」でした！`;
+
+        // 要素を追加
+        main.appendChild(bigMessage);
+        main.appendChild(image);
+        main.appendChild(correctMsg);
+
+        // 紙吹雪発射
+        launchConfetti();
+      }
     }
 
-    // 紙吹雪発射用関数
+    // ==============================
+    // 4) 紙吹雪発射用関数
+    // ==============================
     function launchConfetti() {
       // 2秒間断続的に紙吹雪を出す例
       const duration = 2 * 1000;
