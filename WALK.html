@@ -2,95 +2,272 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>歩数</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>歩数記録</title>
   <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background-color: #f5f5f5;
+      color: #333;
     }
     h1, h2, h3 {
       color: #333;
+      margin-top: 16px;
+      margin-bottom: 12px;
     }
-    form {
-      margin-bottom: 20px;
+    h1 {
+      font-size: 1.5rem;
+      text-align: center;
     }
-    input[type="number"],
-    input[type="submit"],
-    button {
-      padding: 5px;
-      font-size: 16px;
-      margin-right: 5px;
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .input-area {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .step-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    input[type="number"] {
+      flex: 1;
+      padding: 12px;
+      font-size: 1.2rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .step-input input[type="number"] {
+      width: 100%;
+    }
+    .btn {
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background-color: #0077cc;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      touch-action: manipulation;
+      user-select: none;
+      width: 100%;
+    }
+    .btn:active {
+      background-color: #005fa3;
+    }
+    .btn-small {
+      padding: 8px 12px;
+      font-size: 0.9rem;
+    }
+    .btn-increment {
+      width: 48px;
+      height: 48px;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #e0e0e0;
+      color: #333;
+    }
+    .presets {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .preset-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #0077cc;
+      border-radius: 8px;
+      background-color: white;
+      color: #0077cc;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    .preset-btn:active {
+      background-color: #e6f2ff;
+    }
+    .btn-danger {
+      background-color: #dc3545;
+    }
+    .btn-danger:active {
+      background-color: #bd2130;
+    }
+    .btn-action {
+      margin-top: 12px;
+    }
+    .action-row {
+      display: flex;
+      gap: 8px;
+    }
+    .action-row .btn {
+      flex: 1;
     }
     table {
-      border-collapse: collapse;
       width: 100%;
-      margin-top: 10px;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.85rem;
     }
     table, th, td {
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
     }
     th, td {
       padding: 8px;
       text-align: center;
     }
-    .simulation {
-      margin-top: 20px;
-      padding: 10px;
-      border: 1px solid #aaa;
-      background-color: #f9f9f9;
+    th {
+      background-color: #f2f2f2;
+      position: sticky;
+      top: 0;
     }
-    .milestoneTable {
-      margin-top: 10px;
+    .scrollable-table {
+      max-height: 300px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-top: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .scrollable-table table {
+      margin-top: 0;
+    }
+    .flex-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .collapsed {
+      display: none;
+    }
+    .toggle-btn {
+      padding: 8px;
+      background-color: #f2f2f2;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .toggle-btn:after {
+      content: "▼";
+      font-size: 0.8rem;
+    }
+    .toggle-btn.collapsed:after {
+      content: "▶";
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
 
-  <h1>歩数記録システム</h1>
+  <h1>歩数記録アプリ</h1>
 
-  <form id="stepForm">
-    <label for="steps">現在の歩数:</label>
-    <input type="number" id="steps" name="steps" min="0" required>
-    <input type="submit" value="記録">
-    <button type="button" id="resetButton">リセット</button>
-  </form>
-
-  <div class="simulation">
-    <h2>シミュレーション結果</h2>
-    <p id="rateDisplay">1分あたりの増加歩数: N/A</p>
-    <p id="estimateDisplay">10000歩到達推定時刻: N/A</p>
-    <div id="milestoneDisplay">
-      <!-- 未到達の1000歩単位ごとの到達予想を表示 -->
+  <div class="card">
+    <div class="input-area">
+      <div class="step-input">
+        <button class="btn btn-increment" id="decrementButton">-</button>
+        <input type="number" id="steps" name="steps" min="0" inputmode="numeric" pattern="[0-9]*" placeholder="歩数を入力">
+        <button class="btn btn-increment" id="incrementButton">+</button>
+      </div>
+      
+      <div class="presets">
+        <button class="preset-btn" data-value="500">+500</button>
+        <button class="preset-btn" data-value="1000">+1000</button>
+        <button class="preset-btn" data-value="2000">+2000</button>
+        <button class="preset-btn" data-value="5000">+5000</button>
+      </div>
+      
+      <div class="action-row">
+        <button class="btn" id="recordButton">記録する</button>
+      </div>
     </div>
   </div>
 
-  <h2>記録ログ</h2>
-  <table id="logTable">
-    <thead>
-      <tr>
-        <th>記録時刻</th>
-        <th>歩数</th>
-        <th>前回との差（分）</th>
-        <th>1分あたりの増加</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- ログ行が追加されます -->
-    </tbody>
-  </table>
+  <div class="card">
+    <button class="toggle-btn" id="simulationToggle">歩数予測</button>
+    <div id="simulationContent">
+      <p id="rateDisplay">1分あたりの増加歩数: N/A</p>
+      <p id="estimateDisplay">10000歩到達まで: N/A</p>
+      <div id="milestoneDisplay">
+        <!-- 未到達の1000歩単位ごとの到達予想を表示 -->
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <button class="toggle-btn" id="logToggle">記録履歴</button>
+    <div id="logContent" class="collapsed">
+      <div class="scrollable-table">
+        <table id="logTable">
+          <thead>
+            <tr>
+              <th>時刻</th>
+              <th>歩数</th>
+              <th>経過(分)</th>
+              <th>1分あたり</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- ログ行が追加されます -->
+          </tbody>
+        </table>
+      </div>
+      <button class="btn btn-danger btn-action" id="resetButton">リセット</button>
+    </div>
+  </div>
 
   <script>
-    // ログの配列（各要素は { time: ISOString, steps: number }）
+    // ログの配列（各要素は { time: Date, steps: number }）
     let logs = [];
 
     // HTML要素の取得
-    const form = document.getElementById('stepForm');
     const stepsInput = document.getElementById('steps');
+    const recordButton = document.getElementById('recordButton');
     const resetButton = document.getElementById('resetButton');
+    const incrementButton = document.getElementById('incrementButton');
+    const decrementButton = document.getElementById('decrementButton');
+    const presetButtons = document.querySelectorAll('.preset-btn');
     const logTableBody = document.querySelector('#logTable tbody');
     const rateDisplay = document.getElementById('rateDisplay');
     const estimateDisplay = document.getElementById('estimateDisplay');
     const milestoneDisplay = document.getElementById('milestoneDisplay');
+    const simulationToggle = document.getElementById('simulationToggle');
+    const simulationContent = document.getElementById('simulationContent');
+    const logToggle = document.getElementById('logToggle');
+    const logContent = document.getElementById('logContent');
+
+    // トグルボタンの設定
+    simulationToggle.addEventListener('click', function() {
+      simulationContent.classList.toggle('collapsed');
+      this.classList.toggle('collapsed');
+    });
+
+    logToggle.addEventListener('click', function() {
+      logContent.classList.toggle('collapsed');
+      this.classList.toggle('collapsed');
+    });
 
     // ローカルストレージからログを読み込み（あれば）
     function loadLogs() {
@@ -120,15 +297,55 @@
       updateSimulation();
     }
 
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
+    // ステップ入力のプラスボタン
+    incrementButton.addEventListener('click', function() {
+      const currentValue = parseInt(stepsInput.value) || 0;
+      stepsInput.value = currentValue + 100;
+    });
+
+    // ステップ入力のマイナスボタン
+    decrementButton.addEventListener('click', function() {
+      const currentValue = parseInt(stepsInput.value) || 0;
+      if (currentValue >= 100) {
+        stepsInput.value = currentValue - 100;
+      } else {
+        stepsInput.value = 0;
+      }
+    });
+
+    // プリセットボタン
+    presetButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const amount = parseInt(this.dataset.value);
+        const currentValue = parseInt(stepsInput.value) || 0;
+        stepsInput.value = currentValue + amount;
+      });
+    });
+
+    // 記録ボタン
+    recordButton.addEventListener('click', function() {
       const steps = parseInt(stepsInput.value, 10);
+      if (isNaN(steps)) {
+        alert("有効な歩数を入力してください。");
+        return;
+      }
+      
       const currentTime = new Date();
       const newLog = { time: currentTime, steps: steps };
       logs.push(newLog);
       saveLogs();
       updateDisplays();
-      stepsInput.value = '';
+      
+      // 記録後、履歴を自動的に表示
+      if (logContent.classList.contains('collapsed')) {
+        logContent.classList.remove('collapsed');
+        logToggle.classList.remove('collapsed');
+      }
+      
+      // バイブレーションフィードバック（対応デバイスのみ）
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
     });
 
     // リセットボタン：ログとローカルストレージをクリア
@@ -164,9 +381,9 @@
           const nextLog = logs[i + 1];
           const diffMs = nextLog.time - log.time;
           const diffMinutes = diffMs / 60000;
-          diffTime = diffMinutes.toFixed(2);
+          diffTime = diffMinutes.toFixed(1);
           if (diffMinutes > 0) {
-            ratePerMinute = ((nextLog.steps - log.steps) / diffMinutes).toFixed(2);
+            ratePerMinute = ((nextLog.steps - log.steps) / diffMinutes).toFixed(1);
           }
         }
         const diffCell = document.createElement('td');
@@ -183,8 +400,8 @@
 
     function updateSimulation() {
       if (logs.length < 2) {
-        rateDisplay.textContent = "1分あたりの増加歩数: N/A (ログを2回以上記録してください)";
-        estimateDisplay.textContent = "10000歩到達推定時刻: N/A";
+        rateDisplay.textContent = "1分あたり: N/A (2回以上記録してください)";
+        estimateDisplay.textContent = "10000歩到達まで: N/A";
         milestoneDisplay.innerHTML = "";
         return;
       }
@@ -201,37 +418,77 @@
       if (totalMinutes > 0) {
         avgRate = totalStepsGained / totalMinutes;
       }
-      rateDisplay.textContent = "1分あたりの増加歩数: " + avgRate.toFixed(2);
+      rateDisplay.textContent = "1分あたり: " + avgRate.toFixed(1) + " 歩";
 
       // 10000歩到達の予想
       const remainingSteps = 10000 - latestLog.steps;
-      let estimatedMinutesFor10000 = avgRate > 0 ? remainingSteps / avgRate : 0;
-      const estimatedTime10000 = new Date(latestLog.time.getTime() + estimatedMinutesFor10000 * 60000);
-      const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
-      const estimatedTimeString = estimatedTime10000.toLocaleTimeString([], options);
-      estimateDisplay.textContent = "10000歩到達推定時刻: " + estimatedTimeString + "（約" + estimatedMinutesFor10000.toFixed(2) + "分後）";
+      if (remainingSteps <= 0) {
+        estimateDisplay.textContent = "10000歩達成済み！";
+      } else {
+        let estimatedMinutesFor10000 = avgRate > 0 ? remainingSteps / avgRate : 0;
+        const estimatedTime10000 = new Date(latestLog.time.getTime() + estimatedMinutesFor10000 * 60000);
+        const options = { hour: '2-digit', minute: '2-digit' };
+        const estimatedTimeString = estimatedTime10000.toLocaleTimeString([], options);
+        const hours = Math.floor(estimatedMinutesFor10000 / 60);
+        const mins = Math.floor(estimatedMinutesFor10000 % 60);
+        let timeText = "";
+        if (hours > 0) {
+          timeText = hours + "時間" + mins + "分";
+        } else {
+          timeText = mins + "分";
+        }
+        estimateDisplay.textContent = "10000歩到達まで: あと" + timeText + "（" + estimatedTimeString + "）";
+      }
 
       // 1000歩単位ごとの到達予想
       let nextMilestone = Math.ceil(latestLog.steps / 1000) * 1000;
-      if (nextMilestone < latestLog.steps) {
+      if (nextMilestone <= latestLog.steps) {
         nextMilestone += 1000;
       }
-      let milestoneHTML = "<h3>各1000歩ごとの到達予想</h3>";
-      milestoneHTML += "<table class='milestoneTable'><thead><tr><th>目標歩数</th><th>予想到達時刻</th><th>残り分数</th></tr></thead><tbody>";
+      
+      let milestoneHTML = '<div class="scrollable-table"><table class="milestoneTable"><thead><tr><th>目標</th><th>到達予想</th><th>残り時間</th></tr></thead><tbody>';
+      
       for (let milestone = nextMilestone; milestone <= 10000; milestone += 1000) {
         const stepsNeeded = milestone - latestLog.steps;
+        if (stepsNeeded <= 0) continue;
+        
         let minutesNeeded = avgRate > 0 ? stepsNeeded / avgRate : 0;
         const predictedTime = new Date(latestLog.time.getTime() + minutesNeeded * 60000);
-        const predictedTimeString = predictedTime.toLocaleTimeString([], options) + "（約" + minutesNeeded.toFixed(2) + "分後）";
-        milestoneHTML += "<tr><td>" + milestone + "歩</td><td>" + predictedTimeString + "</td><td>" + minutesNeeded.toFixed(2) + "</td></tr>";
+        const options = { hour: '2-digit', minute: '2-digit' };
+        const predictedTimeString = predictedTime.toLocaleTimeString([], options);
+        
+        const hours = Math.floor(minutesNeeded / 60);
+        const mins = Math.floor(minutesNeeded % 60);
+        let timeText = "";
+        if (hours > 0) {
+          timeText = hours + "時間" + mins + "分";
+        } else {
+          timeText = mins + "分";
+        }
+        
+        milestoneHTML += "<tr><td>" + milestone + "歩</td><td>" + predictedTimeString + "</td><td>" + timeText + "</td></tr>";
       }
-      milestoneHTML += "</tbody></table>";
+      milestoneHTML += "</tbody></table></div>";
       milestoneDisplay.innerHTML = milestoneHTML;
     }
 
     // 初回ロード時にログを読み込み・表示
     loadLogs();
     updateDisplays();
+    
+    // スマホでの使いやすさ向上
+    // 数値入力フィールドが選択されたら、先にフォーカス
+    stepsInput.addEventListener('focus', function() {
+      setTimeout(() => this.select(), 0);
+    });
+    
+    // 入力欄でのEnterキー押下時に記録ボタンを押す
+    stepsInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        recordButton.click();
+      }
+    });
   </script>
 </body>
 </html>
