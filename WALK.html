@@ -148,3 +148,29 @@
     function updateSimulation() {
       // シミュレーションは最新の2件のログから1分あたりの歩数増加を計算する
       if (logs.length < 2) {
+        rateDisplay.textContent = "1分あたりの増加歩数: N/A (ログを2回以上記録してください)";
+        estimateDisplay.textContent = "10000歩に到達するまでの推定時間: N/A";
+        return;
+      }
+      // 最新の2件のログを使用
+      const latestLog = logs[logs.length - 1];
+      const prevLog = logs[logs.length - 2];
+      const diffMs = latestLog.time - prevLog.time;
+      const diffMinutes = diffMs / 60000;
+      let rate = 0;
+      if(diffMinutes > 0) {
+        rate = (latestLog.steps - prevLog.steps) / diffMinutes;
+      }
+      rateDisplay.textContent = "1分あたりの増加歩数: " + rate.toFixed(2);
+
+      // 10000歩に到達するまでの残り歩数と推定所要時間（分）
+      const remainingSteps = 10000 - latestLog.steps;
+      let estimatedMinutes = "N/A";
+      if(rate > 0) {
+        estimatedMinutes = (remainingSteps / rate).toFixed(2);
+      }
+      estimateDisplay.textContent = "10000歩に到達するまでの推定時間: " + estimatedMinutes + " 分";
+    }
+  </script>
+</body>
+</html>
