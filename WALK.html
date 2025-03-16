@@ -41,6 +41,9 @@
       border: 1px solid #aaa;
       background-color: #f9f9f9;
     }
+    .milestoneTable {
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -55,6 +58,9 @@
     <h2>シミュレーション結果</h2>
     <p id="rateDisplay">1分あたりの増加歩数: N/A</p>
     <p id="estimateDisplay">10000歩到達推定時刻: N/A</p>
+    <div id="milestoneDisplay">
+      <!-- 未到達の1000歩単位ごとの到達予想を表示 -->
+    </div>
   </div>
 
   <h2>記録ログ</h2>
@@ -82,6 +88,7 @@
     const logTableBody = document.querySelector('#logTable tbody');
     const rateDisplay = document.getElementById('rateDisplay');
     const estimateDisplay = document.getElementById('estimateDisplay');
+    const milestoneDisplay = document.getElementById('milestoneDisplay');
 
     form.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -122,7 +129,6 @@
         row.appendChild(stepsCell);
 
         // 前回との差（分）と1分あたりの増加を計算
-        // 最新ログの場合は次のログが存在する場合のみ計算
         let diffTime = 'N/A';
         let ratePerMinute = 'N/A';
         if (i < logs.length - 1) {
@@ -151,6 +157,7 @@
       if (logs.length < 2) {
         rateDisplay.textContent = "1分あたりの増加歩数: N/A (ログを2回以上記録してください)";
         estimateDisplay.textContent = "10000歩到達推定時刻: N/A";
+        milestoneDisplay.innerHTML = "";
         return;
       }
 
@@ -171,19 +178,42 @@
 
       rateDisplay.textContent = "1分あたりの増加歩数: " + avgRate.toFixed(2);
 
-      // 残りの歩数と所要分数の計算
+      // 10000歩到達の予想
       const remainingSteps = 10000 - latestLog.steps;
-      let estimatedMinutes = 0;
+      let estimatedMinutesFor10000 = 0;
       if (avgRate > 0) {
-        estimatedMinutes = remainingSteps / avgRate;
+        estimatedMinutesFor10000 = remainingSteps / avgRate;
       }
-
-      // 推定時刻の算出
-      const estimatedTime = new Date(latestLog.time.getTime() + estimatedMinutes * 60000);
+      const estimatedTime10000 = new Date(latestLog.time.getTime() + estimatedMinutesFor10000 * 60000);
       const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
-      const estimatedTimeString = estimatedTime.toLocaleTimeString([], options);
+      const estimatedTimeString = estimatedTime10000.toLocaleTimeString([], options);
+      estimateDisplay.textContent = "10000歩到達推定時刻: " + estimatedTimeString + "（約" + estimatedMinutesFor10000.toFixed(2) + "分後）";
 
-      estimateDisplay.textContent = "10000歩到達推定時刻: " + estimatedTimeString + "（約" + estimatedMinutes.toFixed(2) + "分後）";
+      // ------------------------------
+      // 追加：未到達の1000歩単位ごとの到達予想
+      // ------------------------------
+      // 現在の歩数より次の1000歩の区切りから10000歩まで（例：2701なら3000～10000、6789なら7000～10000）
+      let nextMilestone = Math.ceil(latestLog.steps / 1000) * 1000;
+      if (nextMilestone < latestLog.steps) {
+        nextMilestone += 1000;
+      }
+      // milestoneDisplay用のHTMLテーブルを作成
+      let milestoneHTML = "<h3>各1000歩ごとの到達予想</h3>";
+      milestoneHTML += "<table class='milestoneTable'><thead><tr><th>目標歩数</th><th>予想到達時刻</th><th>残り分数</th></tr></thead><tbody>";
+
+      for (let milestone = nextMilestone; milestone <= 10000; milestone += 1000) {
+        const stepsNeeded = milestone - latestLog.steps;
+        let minutesNeeded = 0;
+        let predictedTimeString = "N/A";
+        if (avgRate > 0) {
+          minutesNeeded = stepsNeeded / avgRate;
+          const predictedTime = new Date(latestLog.time.getTime() + minutesNeeded * 60000);
+          predictedTimeString = predictedTime.toLocaleTimeString([], options) + "（約" + minutesNeeded.toFixed(2) + "分後）";
+        }
+        milestoneHTML += "<tr><td>" + milestone + "歩</td><td>" + predictedTimeString + "</td><td>" + minutesNeeded.toFixed(2) + "</td></tr>";
+      }
+      milestoneHTML += "</tbody></table>";
+      milestoneDisplay.innerHTML = milestoneHTML;
     }
   </script>
 </body>
