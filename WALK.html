@@ -106,7 +106,8 @@
       // テーブルをクリア
       logTableBody.innerHTML = '';
 
-      for (let i = 0; i < logs.length; i++) {
+      // 最新ログを最上部に表示するため、配列を逆順にループ
+      for (let i = logs.length - 1; i >= 0; i--) {
         const log = logs[i];
         const row = document.createElement('tr');
 
@@ -120,17 +121,17 @@
         stepsCell.textContent = log.steps;
         row.appendChild(stepsCell);
 
-        // 前回との差（分）と1分あたりの増加を計算（最初のレコードの場合はN/A）
+        // 前回との差（分）と1分あたりの増加を計算
+        // 最新ログの場合は次のログが存在する場合のみ計算
         let diffTime = 'N/A';
         let ratePerMinute = 'N/A';
-        if (i > 0) {
-          const prevLog = logs[i - 1];
-          const diffMs = log.time - prevLog.time;
+        if (i < logs.length - 1) {
+          const nextLog = logs[i + 1];
+          const diffMs = nextLog.time - log.time;
           const diffMinutes = diffMs / 60000;
           diffTime = diffMinutes.toFixed(2);
-          // 分母がゼロにならないようチェック
-          if(diffMinutes > 0) {
-            ratePerMinute = ((log.steps - prevLog.steps) / diffMinutes).toFixed(2);
+          if (diffMinutes > 0) {
+            ratePerMinute = ((nextLog.steps - log.steps) / diffMinutes).toFixed(2);
           }
         }
         const diffCell = document.createElement('td');
@@ -153,7 +154,9 @@
         return;
       }
 
+      // 最初の記録は古い順に並んだ最初の要素
       const firstLog = logs[0];
+      // 最新のログは配列の最後の要素
       const latestLog = logs[logs.length - 1];
 
       // 全体の経過時間（分）と歩数増加を計算
@@ -162,7 +165,7 @@
       const totalStepsGained = latestLog.steps - firstLog.steps;
 
       let avgRate = 0;
-      if(totalMinutes > 0) {
+      if (totalMinutes > 0) {
         avgRate = totalStepsGained / totalMinutes;
       }
 
@@ -171,7 +174,7 @@
       // 残りの歩数と所要分数の計算
       const remainingSteps = 10000 - latestLog.steps;
       let estimatedMinutes = 0;
-      if(avgRate > 0) {
+      if (avgRate > 0) {
         estimatedMinutes = remainingSteps / avgRate;
       }
 
