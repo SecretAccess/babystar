@@ -52,9 +52,9 @@
   </form>
 
   <div class="simulation">
-    <h2>シミュレーション結果</h2>
+    <h2>シミュレーション結果（累計データ基準）</h2>
     <p id="rateDisplay">1分あたりの増加歩数: N/A</p>
-    <p id="estimateDisplay">10000歩に到達するまでの推定時間: N/A</p>
+    <p id="estimateDisplay">10000歩到達推定時刻: N/A</p>
   </div>
 
   <h2>記録ログ</h2>
@@ -95,7 +95,7 @@
       // ログテーブルの更新
       updateLogTable();
 
-      // シミュレーション結果の更新
+      // シミュレーション結果の更新（累計データ基準）
       updateSimulation();
 
       // 入力欄をクリア
@@ -146,30 +146,41 @@
     }
 
     function updateSimulation() {
-      // シミュレーションは最新の2件のログから1分あたりの歩数増加を計算する
+      // 累計データを利用するため、最低2件のログが必要
       if (logs.length < 2) {
         rateDisplay.textContent = "1分あたりの増加歩数: N/A (ログを2回以上記録してください)";
-        estimateDisplay.textContent = "10000歩に到達するまでの推定時間: N/A";
+        estimateDisplay.textContent = "10000歩到達推定時刻: N/A";
         return;
       }
-      // 最新の2件のログを使用
-      const latestLog = logs[logs.length - 1];
-      const prevLog = logs[logs.length - 2];
-      const diffMs = latestLog.time - prevLog.time;
-      const diffMinutes = diffMs / 60000;
-      let rate = 0;
-      if(diffMinutes > 0) {
-        rate = (latestLog.steps - prevLog.steps) / diffMinutes;
-      }
-      rateDisplay.textContent = "1分あたりの増加歩数: " + rate.toFixed(2);
 
-      // 10000歩に到達するまでの残り歩数と推定所要時間（分）
-      const remainingSteps = 10000 - latestLog.steps;
-      let estimatedMinutes = "N/A";
-      if(rate > 0) {
-        estimatedMinutes = (remainingSteps / rate).toFixed(2);
+      const firstLog = logs[0];
+      const latestLog = logs[logs.length - 1];
+
+      // 全体の経過時間（分）と歩数増加を計算
+      const totalDiffMs = latestLog.time - firstLog.time;
+      const totalMinutes = totalDiffMs / 60000;
+      const totalStepsGained = latestLog.steps - firstLog.steps;
+
+      let avgRate = 0;
+      if(totalMinutes > 0) {
+        avgRate = totalStepsGained / totalMinutes;
       }
-      estimateDisplay.textContent = "10000歩に到達するまでの推定時間: " + estimatedMinutes + " 分";
+
+      rateDisplay.textContent = "1分あたりの増加歩数: " + avgRate.toFixed(2);
+
+      // 残りの歩数と所要分数の計算
+      const remainingSteps = 10000 - latestLog.steps;
+      let estimatedMinutes = 0;
+      if(avgRate > 0) {
+        estimatedMinutes = remainingSteps / avgRate;
+      }
+
+      // 推定時刻の算出
+      const estimatedTime = new Date(latestLog.time.getTime() + estimatedMinutes * 60000);
+      const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+      const estimatedTimeString = estimatedTime.toLocaleTimeString([], options);
+
+      estimateDisplay.textContent = "10000歩到達推定時刻: " + estimatedTimeString + "（約" + estimatedMinutes.toFixed(2) + "分後）";
     }
   </script>
 </body>
