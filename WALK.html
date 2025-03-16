@@ -8,20 +8,18 @@
       font-family: Arial, sans-serif;
       margin: 20px;
     }
-    h1, h2 {
+    h1, h2, h3 {
       color: #333;
     }
     form {
       margin-bottom: 20px;
     }
-    input[type="number"] {
+    input[type="number"],
+    input[type="submit"],
+    button {
       padding: 5px;
       font-size: 16px;
-      width: 120px;
-    }
-    input[type="submit"] {
-      padding: 5px 10px;
-      font-size: 16px;
+      margin-right: 5px;
     }
     table {
       border-collapse: collapse;
@@ -48,10 +46,13 @@
 </head>
 <body>
 
+  <h1>歩数記録システム</h1>
+
   <form id="stepForm">
     <label for="steps">現在の歩数:</label>
     <input type="number" id="steps" name="steps" min="0" required>
     <input type="submit" value="記録">
+    <button type="button" id="resetButton">リセット</button>
   </form>
 
   <div class="simulation">
@@ -79,41 +80,69 @@
   </table>
 
   <script>
-    // ログの配列（各要素は { time: Date, steps: number }）
-    const logs = [];
+    // ログの配列（各要素は { time: ISOString, steps: number }）
+    let logs = [];
 
     // HTML要素の取得
     const form = document.getElementById('stepForm');
     const stepsInput = document.getElementById('steps');
+    const resetButton = document.getElementById('resetButton');
     const logTableBody = document.querySelector('#logTable tbody');
     const rateDisplay = document.getElementById('rateDisplay');
     const estimateDisplay = document.getElementById('estimateDisplay');
     const milestoneDisplay = document.getElementById('milestoneDisplay');
 
+    // ローカルストレージからログを読み込み（あれば）
+    function loadLogs() {
+      const storedLogs = localStorage.getItem('stepLogs');
+      if (storedLogs) {
+        try {
+          logs = JSON.parse(storedLogs).map(item => {
+            // timeはDate型に変換
+            return { time: new Date(item.time), steps: item.steps };
+          });
+        } catch(e) {
+          logs = [];
+        }
+      }
+    }
+
+    // ローカルストレージへログを保存
+    function saveLogs() {
+      // DateはISO文字列に変換して保存
+      const logsToStore = logs.map(item => ({ time: item.time.toISOString(), steps: item.steps }));
+      localStorage.setItem('stepLogs', JSON.stringify(logsToStore));
+    }
+
+    // ログテーブルとシミュレーションの更新
+    function updateDisplays() {
+      updateLogTable();
+      updateSimulation();
+    }
+
     form.addEventListener('submit', function(e) {
       e.preventDefault();
-
-      // 入力値を取得し、現在時刻と共にログに記録
       const steps = parseInt(stepsInput.value, 10);
       const currentTime = new Date();
       const newLog = { time: currentTime, steps: steps };
       logs.push(newLog);
-
-      // ログテーブルの更新
-      updateLogTable();
-
-      // シミュレーション結果の更新（累計データ基準）
-      updateSimulation();
-
-      // 入力欄をクリア
+      saveLogs();
+      updateDisplays();
       stepsInput.value = '';
     });
 
-    function updateLogTable() {
-      // テーブルをクリア
-      logTableBody.innerHTML = '';
+    // リセットボタン：ログとローカルストレージをクリア
+    resetButton.addEventListener('click', function() {
+      if (confirm("全てのログをリセットしますか？")) {
+        logs = [];
+        localStorage.removeItem('stepLogs');
+        updateDisplays();
+      }
+    });
 
-      // 最新ログを最上部に表示するため、配列を逆順にループ
+    function updateLogTable() {
+      logTableBody.innerHTML = '';
+      // 最新ログを最上部に表示するため逆順にループ
       for (let i = logs.length - 1; i >= 0; i--) {
         const log = logs[i];
         const row = document.createElement('tr');
@@ -153,7 +182,6 @@
     }
 
     function updateSimulation() {
-      // 累計データを利用するため、最低2件のログが必要
       if (logs.length < 2) {
         rateDisplay.textContent = "1分あたりの増加歩数: N/A (ログを2回以上記録してください)";
         estimateDisplay.textContent = "10000歩到達推定時刻: N/A";
@@ -161,12 +189,10 @@
         return;
       }
 
-      // 最初の記録は古い順に並んだ最初の要素
+      // 最初と最新のログを利用
       const firstLog = logs[0];
-      // 最新のログは配列の最後の要素
       const latestLog = logs[logs.length - 1];
 
-      // 全体の経過時間（分）と歩数増加を計算
       const totalDiffMs = latestLog.time - firstLog.time;
       const totalMinutes = totalDiffMs / 60000;
       const totalStepsGained = latestLog.steps - firstLog.steps;
@@ -175,46 +201,37 @@
       if (totalMinutes > 0) {
         avgRate = totalStepsGained / totalMinutes;
       }
-
       rateDisplay.textContent = "1分あたりの増加歩数: " + avgRate.toFixed(2);
 
       // 10000歩到達の予想
       const remainingSteps = 10000 - latestLog.steps;
-      let estimatedMinutesFor10000 = 0;
-      if (avgRate > 0) {
-        estimatedMinutesFor10000 = remainingSteps / avgRate;
-      }
+      let estimatedMinutesFor10000 = avgRate > 0 ? remainingSteps / avgRate : 0;
       const estimatedTime10000 = new Date(latestLog.time.getTime() + estimatedMinutesFor10000 * 60000);
       const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
       const estimatedTimeString = estimatedTime10000.toLocaleTimeString([], options);
       estimateDisplay.textContent = "10000歩到達推定時刻: " + estimatedTimeString + "（約" + estimatedMinutesFor10000.toFixed(2) + "分後）";
 
-      // ------------------------------
-      // 追加：未到達の1000歩単位ごとの到達予想
-      // ------------------------------
-      // 現在の歩数より次の1000歩の区切りから10000歩まで（例：2701なら3000～10000、6789なら7000～10000）
+      // 1000歩単位ごとの到達予想
       let nextMilestone = Math.ceil(latestLog.steps / 1000) * 1000;
       if (nextMilestone < latestLog.steps) {
         nextMilestone += 1000;
       }
-      // milestoneDisplay用のHTMLテーブルを作成
       let milestoneHTML = "<h3>各1000歩ごとの到達予想</h3>";
       milestoneHTML += "<table class='milestoneTable'><thead><tr><th>目標歩数</th><th>予想到達時刻</th><th>残り分数</th></tr></thead><tbody>";
-
       for (let milestone = nextMilestone; milestone <= 10000; milestone += 1000) {
         const stepsNeeded = milestone - latestLog.steps;
-        let minutesNeeded = 0;
-        let predictedTimeString = "N/A";
-        if (avgRate > 0) {
-          minutesNeeded = stepsNeeded / avgRate;
-          const predictedTime = new Date(latestLog.time.getTime() + minutesNeeded * 60000);
-          predictedTimeString = predictedTime.toLocaleTimeString([], options) + "（約" + minutesNeeded.toFixed(2) + "分後）";
-        }
+        let minutesNeeded = avgRate > 0 ? stepsNeeded / avgRate : 0;
+        const predictedTime = new Date(latestLog.time.getTime() + minutesNeeded * 60000);
+        const predictedTimeString = predictedTime.toLocaleTimeString([], options) + "（約" + minutesNeeded.toFixed(2) + "分後）";
         milestoneHTML += "<tr><td>" + milestone + "歩</td><td>" + predictedTimeString + "</td><td>" + minutesNeeded.toFixed(2) + "</td></tr>";
       }
       milestoneHTML += "</tbody></table>";
       milestoneDisplay.innerHTML = milestoneHTML;
     }
+
+    // 初回ロード時にログを読み込み・表示
+    loadLogs();
+    updateDisplays();
   </script>
 </body>
 </html>
