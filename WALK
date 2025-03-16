@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>歩数シミュレーション</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    input[type="number"] {
+      padding: 5px;
+      font-size: 16px;
+      width: 120px;
+    }
+    input[type="submit"] {
+      padding: 5px 10px;
+      font-size: 16px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+    .simulation {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #aaa;
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>歩数シミュレーションページ</h1>
+  <form id="stepForm">
+    <label for="steps">現在の歩数:</label>
+    <input type="number" id="steps" name="steps" min="0" required>
+    <input type="submit" value="記録">
+  </form>
+
+  <div class="simulation">
+    <h2>シミュレーション結果</h2>
+    <p id="rateDisplay">1分あたりの増加歩数: N/A</p>
+    <p id="estimateDisplay">10000歩に到達するまでの推定時間: N/A</p>
+  </div>
+
+  <h2>記録ログ</h2>
+  <table id="logTable">
+    <thead>
+      <tr>
+        <th>記録時刻</th>
+        <th>歩数</th>
+        <th>前回との差（分）</th>
+        <th>1分あたりの増加</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- ログ行が追加されます -->
+    </tbody>
+  </table>
+
+  <script>
+    // ログの配列（各要素は { time: Date, steps: number }）
+    const logs = [];
+
+    // HTML要素の取得
+    const form = document.getElementById('stepForm');
+    const stepsInput = document.getElementById('steps');
+    const logTableBody = document.querySelector('#logTable tbody');
+    const rateDisplay = document.getElementById('rateDisplay');
+    const estimateDisplay = document.getElementById('estimateDisplay');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // 入力値を取得し、現在時刻と共にログに記録
+      const steps = parseInt(stepsInput.value, 10);
+      const currentTime = new Date();
+      const newLog = { time: currentTime, steps: steps };
+      logs.push(newLog);
+
+      // ログテーブルの更新
+      updateLogTable();
+
+      // シミュレーション結果の更新
+      updateSimulation();
+
+      // 入力欄をクリア
+      stepsInput.value = '';
+    });
+
+    function updateLogTable() {
+      // テーブルをクリア
+      logTableBody.innerHTML = '';
+
+      for (let i = 0; i < logs.length; i++) {
+        const log = logs[i];
+        const row = document.createElement('tr');
+
+        // 記録時刻
+        const timeCell = document.createElement('td');
+        timeCell.textContent = log.time.toLocaleTimeString();
+        row.appendChild(timeCell);
+
+        // 歩数
+        const stepsCell = document.createElement('td');
+        stepsCell.textContent = log.steps;
+        row.appendChild(stepsCell);
+
+        // 前回との差（分）と1分あたりの増加を計算（最初のレコードの場合はN/A）
+        let diffTime = 'N/A';
+        let ratePerMinute = 'N/A';
+        if (i > 0) {
+          const prevLog = logs[i - 1];
+          const diffMs = log.time - prevLog.time;
+          const diffMinutes = diffMs / 60000;
+          diffTime = diffMinutes.toFixed(2);
+          // 分母がゼロにならないようチェック
+          if(diffMinutes > 0) {
+            ratePerMinute = ((log.steps - prevLog.steps) / diffMinutes).toFixed(2);
+          }
+        }
+        const diffCell = document.createElement('td');
+        diffCell.textContent = diffTime;
+        row.appendChild(diffCell);
+
+        const rateCell = document.createElement('td');
+        rateCell.textContent = ratePerMinute;
+        row.appendChild(rateCell);
+
+        logTableBody.appendChild(row);
+      }
+    }
+
+    function updateSimulation() {
+      // シミュレーションは最新の2件のログから1分あたりの歩数増加を計算する
+      if (logs.length < 2) {
