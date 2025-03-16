@@ -336,6 +336,9 @@
       saveLogs();
       updateDisplays();
       
+      // 入力欄を自動クリア
+      stepsInput.value = '';
+      
       // 記録後、履歴を自動的に表示
       if (logContent.classList.contains('collapsed')) {
         logContent.classList.remove('collapsed');
